@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"   
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>mashup天气预报</title>
+<meta name="developer" content="mashup: written by hongjun" />
+<!--  Script include required for Google Maps, note the Google Maps Key embedded in the URL.
+      You need to generate your own key to reuse this file, go to http://www.google.com/apis/maps/signup.html -->
+<script type="text/javascript"
+	src="http://ditu.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAALShM9YB_wDuEyCzT1ZsWeRTe4k_HA635c3R2WrydANOCuMgr8RRU8HZ4ufoX53uaJAEveVCeyTXkJA"></script>
+<script type="text/javascript">  
+//<![CDATA[
+var map;
+function load() {
+  if (GBrowserIsCompatible()) {    
+     map = new GMap2(document.getElementById("google_map_div"));
+     map.addControl(new GSmallMapControl());
+     map.addControl(new GScaleControl());
+     map.setCenter(new GLatLng(39.89945, 116.40969),6);//北京
+     GEvent.addListener(map, "click", function(marker, point) {
+     	  getData(point.lat(), point.lng());
+        });
+  }
+}
+
+var  xmlHttp;
+var latitute;
+var longitute;
+function getData(lat, lng)
+{	
+	latitute = lat;
+	longitute = lng;
+	var  url = "dataProcess";
+    xmlHttp = GXmlHttp.create();     
+    xmlHttp.open("POST", url, true);    
+    xmlHttp.onreadystatechange = showData;
+    xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");    
+    xmlHttp.send("latitute="+lat+"&longitute="+lng);    
+}
+function showData()
+{	
+	if (xmlHttp.readyState == 4 )  {
+         if (xmlHttp.status == 200 )  {          
+            var  weather_div  =  document.getElementById("weather_div"); 
+            var  response = eval("(" + xmlHttp.responseText + ")");
+            //alert(xmlHttp.responseText);
+            weather_div.innerHTML = ""; 
+            //alert(xmlHttp.responseText);
+            //var html;  
+            var patten = /(\d+)/;        
+            for(i=0;i < response.weather.length; i++) {
+            	var current_condition = response.weather[i].current_condition;             	
+            	var icon = response.weather[i].icon;             	
+            	var rain_today = response.weather[i].rain_today;  
+            	var wind_speed = response.weather[i].wind_speed;  
+            	var city_state = response.weather[i].city_state;
+            	var temp = response.weather[i].temp; 
+            	var temp_high = response.weather[i].temp_high;             	   	
+            	if (patten.test(temp_high))
+            	{        
+            		temp_high = RegExp.$1; 
+            	}          	
+            	var temp_low = response.weather[i].temp_low; 
+            	if (patten.test(temp_low))
+            	{        
+            		temp_low = RegExp.$1; 
+            	} 
+            	var humidity = response.weather[i].humidity;            				
+            	var humidity_high = response.weather[i].humidity_high;            	
+            	var humidity_low = response.weather[i].humidity_low; 
+            	var pressure = response.weather[i].pressure;            				
+            	var pressure_high = response.weather[i].pressure_high;            	
+            	var pressure_low = response.weather[i].pressure_low; 
+            	var html =[ '天气：'+ current_condition + '<img src ="'+icon+'">',
+            	        '降雨量：'+ rain_today + 'mm',
+            	        '风力：' + wind_speed + 'km',
+            	        '温度：'+ temp + '&deg;C，'+temp_low+'&deg;C～'+temp_high+'&deg;C',
+            	        '湿度：'+ humidity + '%，'+humidity_low+'%～'+ humidity_high+'%', 
+            	        '气压：'+ pressure + 'mbar，'+pressure_low+'mbar～'+pressure_high+'mbar'
+            	      ]		            	       	    
+            	    weather_div.innerHTML = html.join('<br>');		
+				}
+				map.setCenter(new GLatLng(latitute, longitute), 6);
+                map.openInfoWindow(map.getCenter(), document.createTextNode('这里的天气参见右边提示栏'));
+			 
+        }
+      }
+
+}
+//]]>
+</script>
+</head>
+<!--  the onload handler will check the browser version and set the map to the default location -->
+<body onload="load()" onunload="GUnload()">
+<table>
+	<tr>
+		<td valign="top"><!--  This is the spot where the Javascript code will inject the map picture, referenced by mapper.js -->
+		<div id="google_map_div" style="width: 750px; height: 600px"></div>
+		</td>
+		<td valign="top">
+		<p>
+		<div id="weather_div"><!--  This div will receive the Mashed up list of locations from the getLocationsAndMap() function -->
+		</div>
+		</p>
+		</td>
+	</tr>
+</table>
+</body>
+</html>
